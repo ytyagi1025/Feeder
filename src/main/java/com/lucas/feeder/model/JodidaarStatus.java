@@ -3,5 +3,7 @@ package com.lucas.feeder.model;
 public enum JodidaarStatus {
     SUCCESS,
     FAILED,
-    NOT_ATTEMPTED
+    NOT_ATTEMPTED,
+    VALIDATED_EARLIER,
+    VALIDATED_ELSE
 }

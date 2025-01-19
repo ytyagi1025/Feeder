@@ -22,7 +22,7 @@ public class ExcelRepo {
 
     public boolean loadData() {
         try {
-            ClassPathResource resource = new ClassPathResource("points.xlsx");
+            ClassPathResource resource = new ClassPathResource("QRData.xlsx");
             InputStream inputStream = resource.getInputStream();
 
             try (Workbook workbook = WorkbookFactory.create(inputStream)) {
@@ -30,7 +30,7 @@ public class ExcelRepo {
                 for (Row row : sheet) {
                     Cell cell = row.getCell(0);
                     String value = cell.getStringCellValue();
-                    if (value.contains("Barecode")) {
+                    if (value.contains("Barcode")) {
                         continue;
                     }
                     PointsData pointsData = new PointsData();

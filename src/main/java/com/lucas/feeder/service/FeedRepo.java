@@ -47,12 +47,8 @@ public class FeedRepo {
     private PointsRepository pointsRepository;
 
     public void feedPoints() {
-        account = getAccount();
-        if (account == Account.RETAILER) {
-            feedRetailerPoints();
-        } else {
-            feedJodidaarPoints();
-        }
+        feedRetailerPoints();
+        feedJodidaarPoints();
     }
 
     private Account getAccount() {
@@ -71,6 +67,7 @@ public class FeedRepo {
             log.info("No entries found to feed");
             return;
         }
+        log.info("Feeding retailer points started");
         WebDriver webDriver = new ChromeDriver();
         webDriver.get(retailerUrl);
         webDriver.manage().window().maximize();
@@ -82,19 +79,24 @@ public class FeedRepo {
         login.click();
         log.info("Login completed {}, {}", retailerUserName, retailerPassword);
         int completedCount = 0;
-        while(result!=null && completedCount<batchSize) {
+        while (result != null && completedCount < batchSize) {
             WebElement codeInputElement = webDriver.findElement(By.xpath(inputXPath));
             codeInputElement.sendKeys(result.getGenuineCode());
             WebElement submitButton = webDriver.findElement(By.xpath("//a[@id='MainContent_ancValidate']"));
             submitButton.click();
             WebElement submissionResult = webDriver.findElement(By.xpath("//span[@id='MainContent_dgGenuinePonits_Label2_0']"));
             String resultValue = submissionResult.getText();
-            if(resultValue.contains("Genuine Code validated for Part No")){
+            if (resultValue.contains("Genuine Code validated for Part No")) {
                 result.setRetailerStatus(RetailerStatus.SUCCESS);
                 result.setStatus(Status.SUCCESS);
                 completedCount++;
-            }
-            else{
+            } else if (resultValue.contains("Genuine Code validated earlier by another Retailer")) {
+                result.setRetailerStatus(RetailerStatus.VALIDATED_ELSE);
+                result.setStatus(Status.SUCCESS);
+            } else if (resultValue.contains("Points have already been claimed")) {
+                result.setRetailerStatus(RetailerStatus.VALIDATED_EARLIER);
+                result.setStatus(Status.SUCCESS);
+            } else {
                 result.setRetailerStatus(RetailerStatus.FAILED);
             }
             pointsRepository.save(result);
@@ -115,6 +117,7 @@ public class FeedRepo {
             log.info("No entries found to feed");
             return;
         }
+        log.info("Feeding jodidaar points started");
         WebDriver webDriver = new ChromeDriver();
         webDriver.get(jodidaarUrl);
         webDriver.manage().window().maximize();
@@ -126,7 +129,7 @@ public class FeedRepo {
         login.click();
         log.info("Login completed {}, {}", jodidaarUserName, jodidaarPassword);
         int completedCount = 0;
-        while(result!=null && completedCount<batchSize) {
+        while (result != null && completedCount < batchSize) {
             WebElement codeInputElement = webDriver.findElement(By.xpath(inputXPath));
             codeInputElement.sendKeys(result.getGenuineCode());
             WebElement submitButton = webDriver.findElement(By.xpath("//a[@id='MainContent_ancValidate']"));
@@ -135,12 +138,17 @@ public class FeedRepo {
             submitButton.click();
             WebElement submissionResult = webDriver.findElement(By.xpath("//span[@id='MainContent_dgGenuinePonits_Label2_0']"));
             String resultValue = submissionResult.getText();
-            if(resultValue.contains("Genuine Code validated for Part No")){
+            if (resultValue.contains("Genuine Code validated for Part No")) {
                 result.setJodidaarStatus(JodidaarStatus.SUCCESS);
                 result.setStatus(Status.SUCCESS);
                 completedCount++;
-            }
-            else{
+            } else if (resultValue.contains("Points have already been claimed")) {
+                result.setJodidaarStatus(JodidaarStatus.VALIDATED_EARLIER);
+                result.setStatus(Status.SUCCESS);
+            } else if (resultValue.contains("Genuine Code validated earlier by another Jodidar")) {
+                result.setJodidaarStatus(JodidaarStatus.VALIDATED_ELSE);
+                result.setStatus(Status.SUCCESS);
+            } else {
                 result.setJodidaarStatus(JodidaarStatus.FAILED);
             }
             pointsRepository.save(result);
