@@ -61,7 +61,7 @@ public class FeedRepo {
     }
 
     private void feedRetailerPoints() {
-        PointsData result = pointsRepository.findFirstByStatusAndRetailerStatus(Status.FAILED, RetailerStatus.NOT_ATTEMPTED);
+        PointsData result = pointsRepository.findFirstByStatusAndRetailerStatusAndCodeType(Status.FAILED, RetailerStatus.NOT_ATTEMPTED, CodeType.RETAILER);
 
         if (result == null) {
             log.info("No entries found to feed");
@@ -102,7 +102,7 @@ public class FeedRepo {
             pointsRepository.save(result);
             WebElement backButton = webDriver.findElement(By.xpath("//a[contains(text(),'Back')]"));
             backButton.click();
-            result = pointsRepository.findFirstByStatusAndRetailerStatus(Status.FAILED, RetailerStatus.NOT_ATTEMPTED);
+            result = pointsRepository.findFirstByStatusAndRetailerStatusAndCodeType(Status.FAILED, RetailerStatus.NOT_ATTEMPTED, CodeType.RETAILER);
         }
         webDriver.quit();
         log.info("Feeding retailer points completed {}", completedCount);
@@ -111,7 +111,7 @@ public class FeedRepo {
 
 
     private void feedJodidaarPoints() {
-        PointsData result = pointsRepository.findFirstByStatusAndJodidaarStatus(Status.FAILED, JodidaarStatus.NOT_ATTEMPTED);
+        PointsData result = pointsRepository.findFirstByStatusAndJodidaarStatusAndCodeType(Status.FAILED, JodidaarStatus.NOT_ATTEMPTED, CodeType.JODIDAR);
 
         if (result == null) {
             log.info("No entries found to feed");
@@ -134,6 +134,11 @@ public class FeedRepo {
             codeInputElement.sendKeys(result.getGenuineCode());
             WebElement submitButton = webDriver.findElement(By.xpath("//a[@id='MainContent_ancValidate']"));
             submitButton.click();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             submitButton = webDriver.findElement(By.xpath("//a[@id='MainContent_ancValidate']"));
             submitButton.click();
             WebElement submissionResult = webDriver.findElement(By.xpath("//span[@id='MainContent_dgGenuinePonits_Label2_0']"));
@@ -148,13 +153,17 @@ public class FeedRepo {
             } else if (resultValue.contains("Genuine Code validated earlier by another Jodidar")) {
                 result.setJodidaarStatus(JodidaarStatus.VALIDATED_ELSE);
                 result.setStatus(Status.SUCCESS);
-            } else {
+            } else if (resultValue.contains("Genuine Code validated. Points not credited")) {
+                result.setJodidaarStatus(JodidaarStatus.VALIDATED_OLD);
+                result.setStatus(Status.SUCCESS);
+            }
+            else {
                 result.setJodidaarStatus(JodidaarStatus.FAILED);
             }
             pointsRepository.save(result);
             WebElement backButton = webDriver.findElement(By.xpath("//a[contains(text(),'Back')]"));
             backButton.click();
-            result = pointsRepository.findFirstByStatusAndJodidaarStatus(Status.FAILED, JodidaarStatus.NOT_ATTEMPTED);
+            result = pointsRepository.findFirstByStatusAndJodidaarStatusAndCodeType(Status.FAILED, JodidaarStatus.NOT_ATTEMPTED, CodeType.JODIDAR);
         }
         webDriver.quit();
         log.info("Feeding jodidaar points completed {}", completedCount);

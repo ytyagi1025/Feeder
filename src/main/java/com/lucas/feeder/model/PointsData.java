@@ -14,4 +14,5 @@ public class PointsData {
     private Status status;
     private JodidaarStatus jodidaarStatus;
     private RetailerStatus retailerStatus;
+    private CodeType codeType;
 }

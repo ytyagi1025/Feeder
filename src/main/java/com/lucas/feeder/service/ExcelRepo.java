@@ -1,10 +1,7 @@
 package com.lucas.feeder.service;
 
 import com.lucas.feeder.dao.PointsRepository;
-import com.lucas.feeder.model.JodidaarStatus;
-import com.lucas.feeder.model.PointsData;
-import com.lucas.feeder.model.RetailerStatus;
-import com.lucas.feeder.model.Status;
+import com.lucas.feeder.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +19,16 @@ public class ExcelRepo {
 
     public boolean loadData() {
         try {
-            ClassPathResource resource = new ClassPathResource("QRData.xlsx");
+            ClassPathResource resource = new ClassPathResource("Nisar.xlsx");
             InputStream inputStream = resource.getInputStream();
 
             try (Workbook workbook = WorkbookFactory.create(inputStream)) {
                 Sheet sheet = workbook.getSheetAt(0); // Read the first sheet
                 for (Row row : sheet) {
                     Cell cell = row.getCell(0);
+                    Cell codeType = row.getCell(1);
                     String value = cell.getStringCellValue();
+                    String type = codeType.getStringCellValue();
                     if (value.contains("Barcode")) {
                         continue;
                     }
@@ -38,6 +37,12 @@ public class ExcelRepo {
                     pointsData.setStatus(Status.FAILED);
                     pointsData.setJodidaarStatus(JodidaarStatus.NOT_ATTEMPTED);
                     pointsData.setRetailerStatus(RetailerStatus.NOT_ATTEMPTED);
+                    if(type.startsWith("y") || type.startsWith("Y")){
+                        pointsData.setCodeType(CodeType.RETAILER);
+                    }
+                    else{
+                        pointsData.setCodeType(CodeType.JODIDAR);
+                    }
                     pointsRepository.save(pointsData);
                 }
             }

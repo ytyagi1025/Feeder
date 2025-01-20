@@ -5,5 +5,6 @@ public enum JodidaarStatus {
     FAILED,
     NOT_ATTEMPTED,
     VALIDATED_EARLIER,
-    VALIDATED_ELSE
+    VALIDATED_ELSE,
+    VALIDATED_OLD
 }
